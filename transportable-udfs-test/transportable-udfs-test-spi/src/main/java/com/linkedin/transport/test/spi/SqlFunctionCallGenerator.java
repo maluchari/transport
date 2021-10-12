@@ -6,7 +6,10 @@
 package com.linkedin.transport.test.spi;
 
 import com.linkedin.transport.test.spi.types.ArrayTestType;
+import com.linkedin.transport.test.spi.types.BinaryTestType;
 import com.linkedin.transport.test.spi.types.BooleanTestType;
+import com.linkedin.transport.test.spi.types.DoubleTestType;
+import com.linkedin.transport.test.spi.types.FloatTestType;
 import com.linkedin.transport.test.spi.types.IntegerTestType;
 import com.linkedin.transport.test.spi.types.LongTestType;
 import com.linkedin.transport.test.spi.types.MapTestType;
@@ -14,6 +17,8 @@ import com.linkedin.transport.test.spi.types.StringTestType;
 import com.linkedin.transport.test.spi.types.StructTestType;
 import com.linkedin.transport.test.spi.types.TestType;
 import com.linkedin.transport.test.spi.types.UnknownTestType;
+import java.nio.ByteBuffer;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,6 +29,7 @@ import java.util.stream.IntStream;
  * Creates a SQL function call string for the given function name and the function arguments
  */
 public interface SqlFunctionCallGenerator {
+  Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
 
   /**
    * Returns SQL function call string of the format {@code functionName(argument1, argument2, argument3, ...)}
@@ -53,6 +59,12 @@ public interface SqlFunctionCallGenerator {
       return getBooleanArgumentString((Boolean) argument);
     } else if (argumentType instanceof StringTestType) {
       return getStringArgumentString((String) argument);
+    } else if (argumentType instanceof DoubleTestType) {
+      return getDoubleArgumentString((Double) argument);
+    } else if (argumentType instanceof FloatTestType) {
+      return getFloatArgumentString((Float) argument);
+    } else if (argumentType instanceof BinaryTestType) {
+      return getBinaryArgumentString((ByteBuffer) argument);
     } else if (argumentType instanceof ArrayTestType) {
       return getArrayArgumentString((List<Object>) argument, ((ArrayTestType) argumentType).getElementType());
     } else if (argumentType instanceof MapTestType) {
@@ -83,6 +95,19 @@ public interface SqlFunctionCallGenerator {
 
   default String getStringArgumentString(String value) {
     return "'" + value + "'";
+  }
+
+  default String getDoubleArgumentString(Double value) {
+    return  "CAST(" + value + " AS double)";
+  }
+
+  default String getFloatArgumentString(Float value) {
+    return "CAST(" + value + " AS float)";
+  }
+
+  default String getBinaryArgumentString(ByteBuffer value) {
+    String base64EncodedValue = BASE64_ENCODER.encodeToString(value.array());
+    return "unbase64('" + base64EncodedValue + "')";
   }
 
   /**

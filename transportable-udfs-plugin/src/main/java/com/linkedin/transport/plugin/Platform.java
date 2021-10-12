@@ -8,6 +8,7 @@ package com.linkedin.transport.plugin;
 import com.linkedin.transport.codegen.WrapperGenerator;
 import com.linkedin.transport.plugin.packaging.Packaging;
 import java.util.List;
+import org.gradle.jvm.toolchain.JavaLanguageVersion;
 
 
 /**
@@ -20,13 +21,15 @@ public class Platform {
   private final Class<? extends WrapperGenerator> _wrapperGeneratorClass;
   private final List<DependencyConfiguration> _defaultWrapperDependencyConfigurations;
   private final List<DependencyConfiguration> _defaultTestDependencyConfigurations;
-  private final Packaging _packaging;
+  private final List<Packaging> _packaging;
+  private final JavaLanguageVersion _javaLanguageVersion;
 
   public Platform(String name, Language language, Class<? extends WrapperGenerator> wrapperGeneratorClass,
-      List<DependencyConfiguration> defaultWrapperDependencyConfigurations,
-      List<DependencyConfiguration> defaultTestDependencyConfigurations, Packaging packaging) {
+      JavaLanguageVersion javaLanguageVersion, List<DependencyConfiguration> defaultWrapperDependencyConfigurations,
+      List<DependencyConfiguration> defaultTestDependencyConfigurations, List<Packaging> packaging) {
     _name = name;
     _language = language;
+    _javaLanguageVersion = javaLanguageVersion;
     _wrapperGeneratorClass = wrapperGeneratorClass;
     _defaultWrapperDependencyConfigurations = defaultWrapperDependencyConfigurations;
     _defaultTestDependencyConfigurations = defaultTestDependencyConfigurations;
@@ -53,7 +56,11 @@ public class Platform {
     return _defaultTestDependencyConfigurations;
   }
 
-  public Packaging getPackaging() {
+  public List<Packaging> getPackaging() {
     return _packaging;
+  }
+
+  public JavaLanguageVersion getJavaLanguageVersion() {
+    return _javaLanguageVersion;
   }
 }

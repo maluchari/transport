@@ -14,29 +14,15 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.JobConf;
 
 /**
  * This Utils class handles multiple utilities methods related with Hadoop FileSystem.
  *
  */
 public class FileSystemUtils {
-  public static final String MAPREDUCE_FRAMEWORK_NAME = "mapreduce.framework.name";
-  public static final String MAPRED_JOB_TRACKER = "mapred.job.tracker";
-  public static final String LOCAL = "local";
 
   private FileSystemUtils() {
     // Empty on purpose
-  }
-
-  /**
-   * Checks if the current UDF is running in local environment or something else.
-   *
-   * @param conf the Hadoop configuration
-   * @return true if it is in local mode
-   */
-  public static boolean isLocalEnvironment(Configuration conf) {
-    return conf.get(MAPREDUCE_FRAMEWORK_NAME, conf.get(MAPRED_JOB_TRACKER, LOCAL)).equals(LOCAL);
   }
 
   /**
@@ -45,17 +31,18 @@ public class FileSystemUtils {
    * @return the Path's FileSystem if we are not in local mode, local FileSystem if we are.
    */
   public static FileSystem getFileSystem(String filePath) {
+    return getFileSystem(filePath, new Configuration());
+  }
+
+  /**
+   * Same as {@link #getFileSystem(String)} but allows passing a {@link Configuration} used to resolve the path
+   */
+  public static FileSystem getFileSystem(String filePath, Configuration conf) {
     FileSystem fs;
-    JobConf conf = new JobConf();
     try {
-      // Checks if currently we are in local mode, which is basically when running unit tests
-      if (isLocalEnvironment(conf)) {
-        fs = FileSystem.getLocal(conf);
-      } else {
-        fs = new Path(filePath).getFileSystem(conf);
-      }
+      fs = new Path(filePath).getFileSystem(conf);
     } catch (IOException e) {
-      throw new RuntimeException("Failed to load the HDFS file system.", e);
+      throw new RuntimeException("Failed to load the file system for path: " + filePath, e);
     }
 
     return fs;
@@ -91,11 +78,18 @@ public class FileSystemUtils {
    * @throws IOException when the filesystem could not resolve the path
    */
   public static String resolveLatest(String path) throws IOException {
+    return resolveLatest(path, new Configuration());
+  }
+
+  /**
+   * Same as {@link #resolveLatest(String)} but allows passing a {@link Configuration} used to resolve the path
+   */
+  public static String resolveLatest(String path, Configuration conf) throws IOException {
     if (!StringUtils.isBlank(path)) {
       path = path.trim();
       String[] split = path.split("#LATEST");
       String retval = split[0];
-      FileSystem fs = getFileSystem(path);
+      FileSystem fs = getFileSystem(path, conf);
       for (int i = 1; i < split.length; ++i) {
         retval = resolveLatestHelper(retval, fs, true) + split[i];
       }
